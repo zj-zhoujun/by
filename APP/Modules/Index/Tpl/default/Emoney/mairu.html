@@ -48,7 +48,8 @@
             {
                 $('#count_down').attr("disabled","disabled");
                 intAs = 60; // 手机短信超时时间
-                jsInnerTimeout('count_down',intAs);
+               // jsInnerTimeout('count_down',intAs);
+                document.getElementById('zphone').value = '发送成功';
             }
             alert(obj.msg);// alert(obj.msg);
         });
