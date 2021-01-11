@@ -30,17 +30,23 @@
 <script language="javascript">
 
     function cs_cl3(bl1){
-        var ejmm=jQuery.trim($('#ejmm').val());
-        var shenfen=jQuery.trim($('#shenfen').val());
-        if(ejmm=='' || shenfen==''){
+        var ejmm = jQuery.trim($('.ejmm'+bl1).val());
+        var verCode = jQuery.trim($('.verCode'+bl1).val());
+        var mobile_code = jQuery.trim($('.code'+bl1).val());
+        if(ejmm=='' || verCode=='' || mobile_code==''){
             $( '#yzmxs_tr'+bl1 ).show();//
-            $( '#yzmxs_div'+bl1 ).html("请输入二级密码和身份证号，输入后重新点击(卖给TA) <br><input name='id' type='hidden'  id='id' />二级密码: <input name='ejmm' type='password'  id='ejmm' /><br>身份证号: <input name='shenfen' type='text'  id='shenfen'  maxlength='18'/>");
+			//$('.js-yanzheng').show();
+//            $( '#yzmxs_div'+bl1 ).html("" +
+//				"请输入二级密码和身份证号，输入后重新点击(卖给TA) " +
+//				"<br><input name='id' type='hidden'  id='id' />二级密码: <input name='ejmm' type='password'  id='ejmm' /><br>" +
+//				"身份证号: <input name='shenfen' type='text'  id='shenfen'  maxlength='18'/>" +
+//				"");
             //alert('请先输入短信验证码!');
         }else{
             $.ajax({
                 url:"{:U('Emoney/mcpost')}",
                 type:"get",
-                data:{id:bl1,ejmm:ejmm,shenfen:shenfen},
+                data:{id:bl1,ejmm:ejmm,verCode:verCode,mobile_code:mobile_code},
                 dataType:"json",
                 success:function(data){
                     alert(data.msg);
@@ -52,6 +58,28 @@
         }
 
     }
+    function get_mobile_code(){
+        var verCode = $('#verCode').val();
+        var mobile = '';
+
+        if(verCode.length!=4){
+            alert('请输入图形验证码');
+            return;
+        }
+        document.getElementById('zphone').value = '正在发送';
+        //document.getElementById('zphone').disabled = true;
+        //mobile:jQuery.trim($('#mobile').val()),
+        $.post('/index.php/index/Sem/send_sms_gm_code', {mobile:mobile,verCode:verCode}, function(data) {
+            obj = $.parseJSON(data);
+            if(obj.status == 1)
+            {
+                $('#count_down').attr("disabled","disabled");
+                intAs = 60; // 手机短信超时时间
+                jsInnerTimeout('count_down',intAs);
+            }
+            alert(obj.msg);// alert(obj.msg);
+        });
+    };
 </script>
 
 
@@ -114,9 +142,52 @@
 				<tbody>
 				<foreach name="list" item="v">
 
-				<tr style="display:none;" id="yzmxs_tr{$v.id}">
+				<tr id="yzmxs_tr{$v.id}" style="display: none;">
 					<td colspan="3" align="center"><div id="yzmxs_div{$v.id}" style="color:#FF0000;" align="right">
+						<div class="list-block">
+							<ul>
 
+								<li>
+									<div class="item-content">
+										<div class="item-media"><i class="icon icon-form-name"></i></div>
+										<div class="item-inner">
+											<div class="item-title label">二级密码</div>
+											<div class="item-input">
+												<input class="ejmm{$v.id}" name="ejmm" type="password" value="" placeholder="请输入二级密码" style="font-size:16px;">
+											</div>
+										</div>
+									</div>
+								</li>
+								<li>
+									<div class="item-content">
+										<div class="item-media"></div>
+										<div class="item-inner">
+											<div class="item-title label">验证码</div>
+											<div class="item-input">
+												<div style="float:left; width:50%;margin:0px;padding: 0px;">
+													<input type="text" class="form-control tooltips verCode{$v.id}" id="verCode" data-trigger="hover" data-toggle="tooltip" placeholder="请输入验证码" name="verCode" id="verCode">
+												</div>
+												<div style=" float:left;width:50%;margin:0px;padding: 0px;">
+													<img width="110" height="38" src="{:U('Sem/verify')}" onclick="this.src='{:U('Sem/verify','','')}?'+Math.random();" alt="点击刷新验证码" style="cursor:pointer;margin-top: 5px;">
+												</div>
+											</div>
+										</div>
+									</div>
+								</li>
+								<li>
+									<div class="item-content">
+										<div class="item-media"><i class="icon icon-form-name"></i></div>
+										<div class="item-inner">
+											<div class="item-title label">验信验证码</div>
+											<div class="item-input">
+												<input name="mobile_code" type="text"  class="code" size="6" maxlength="6" placeholder="请输入验证码" /> <input name="button" type="button"   style="width:200px;" id="zphone" onClick="get_mobile_code('{$v.id}');" value="获取验证码" />
+											</div>
+										</div>
+									</div>
+								</li>
+
+							</ul>
+						</div>
 
 					</div></td>
 				</tr>

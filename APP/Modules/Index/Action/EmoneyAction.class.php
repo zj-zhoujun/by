@@ -103,6 +103,7 @@ Class EmoneyAction extends CommonAction{
                 alert('非法操作！',U('Index/index/index'));
                 exit;
             }
+
             $level = M('member')->where(array('id'=>session('mid')))->getField('level');
             // $jy_time = M('member')->join('left join member_group on member_group.level = member.level')->where(array('member.id'=>session('mid')))->getField('member_group.item1');
             $jy_time = M('member_group')->where(array('level'=>$level))->getField('item1');
@@ -127,6 +128,11 @@ Class EmoneyAction extends CommonAction{
             if($user['status'] == 0){
                 alert('请先实名认证',U('account/shoukuanma'));
                 exit;
+            }
+            $mobile = $user['mobile'];
+            $check_code = sms_code_verify($mobile,$_POST['mobile_code'],session_id());
+            if($check_code['status'] != 1){
+                alert('手机验证码不匹配或者超时',U('emoney/mairu'));
             }
             $cbt = $_POST['amount'];
             if(!preg_match("/^\d*$/",$cbt)){
@@ -207,8 +213,8 @@ Class EmoneyAction extends CommonAction{
     //卖出执行
     public function mcpost(){
         if (IS_GET) {
-            if(empty($_GET['id']) && empty($_GET['ejmm']) && empty($_GET['shenfen'])){
-                $this->ajaxReturn(array("msg"=>'请输入交易密码及身份证号验证交易！'));
+            if(empty($_GET['id']) && empty($_GET['ejmm']) && empty($_GET['verCode'])&& empty($_GET['mobile_code'])){
+                $this->ajaxReturn(array("msg"=>'请输入交易密码及短信验证交易！'));
             }
 
             $time=date('Y-m-d 00:00:00');
@@ -248,7 +254,12 @@ Class EmoneyAction extends CommonAction{
             }
 
             if ($user['shenfen']!=$_GET['shenfen'] ) {
-                $this->ajaxReturn(array("msg"=>'身份证号错误,请重新输入！'));
+                //$this->ajaxReturn(array("msg"=>'身份证号错误,请重新输入！'));
+            }
+            $mobile = $user['mobile'];
+            $check_code = sms_code_verify($mobile,$_GET['mobile_code'],session_id());
+            if($check_code['status'] != 1){
+                $this->ajaxReturn(array("msg"=>'手机验证码不匹配或者超时！'));
             }
 
             $shouxu = M('member_group')->where(array('level'=>$user['level']))->getField('shouxu');
@@ -485,6 +496,13 @@ Class EmoneyAction extends CommonAction{
         if (IS_POST) {
             $data_P = 	$_POST['id'];
             $text = 	$_POST['content'];
+
+            $user = M('member')->where(array('username'=>session('username')))->find();
+            $mobile = $user['mobile'];
+            $check_code = sms_code_verify($mobile,$_POST['mobile_code'],session_id());
+            if($check_code['status'] != 1){
+                alert('手机验证码不匹配或者超时',-1);
+            }
 
             $result=M('jyzx')->where(array('id'=>$data_P))->find();
             $time = strtotime($result['jydate']);
